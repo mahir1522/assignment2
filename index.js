@@ -77,7 +77,7 @@ app.post('/api/greet', async (req,res) =>{
 app.get('/api/timesOfDay', async (req, res) =>{
     try{
         const timeOfDay = await db.all(`select timeOfDay from greetings`);
-        res.json({ timeOfDay: timeOfDay.map(row => row.timeOfDay )});
+        res.json(timeOfDay.map(row => row.timeOfDay ));
     }catch (error){
         res.status(500).json({error: error.message });
     }
@@ -87,7 +87,7 @@ app.get('/api/timesOfDay', async (req, res) =>{
 app.get('/api/languages', async (req, res) =>{
     try{
         const language = await db.all(`select language from greetings`);
-        res.json({ Languages: language.map(row => row.language )});
+        res.json(language.map(row => row.language ));
     }catch (error){
         res.status(500).json({error: error.message });
     }
