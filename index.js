@@ -1,12 +1,16 @@
+require('dotenv').config();
 const express = require("express");
-const sqlite = require("sqlite");
-const sqlite3 = require("sqlite3");
-const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 app.use(express.json());
 
 const PORT = 3000;
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+)
 
 
 class GreetingRequest{
@@ -17,38 +21,44 @@ class GreetingRequest{
     }
 }
 
+
 class GreetingResponse{
     constructor(greetingMessage){
         this.greetingMessage = greetingMessage;
     }
 }
 
+function seedData(){
+    async() =>{
+        try{
+            const {data, error} = await supabase.from('Greetings').select('id');
 
-let db;
-( async ()=>{
-    db = await sqlite.open({
-        filename: './greetings.db',
-        driver: sqlite3.Database
-    });
+            if(error) throw error;
 
-    await db.exec(`
-        create table if not exists Greetings(
-        id integer primary key autoincrement,
-        timeOfDay text not null,
-        language text not null,
-        greetingMessage text not null,
-        tone text not null
-        )`
-    );
-    
-    await db.run(`
-        insert into Greetings (timeOfDay, language, greetingMessage, tone)
-        values
-        ('Morning', 'English', 'Good morning', 'Formal'),
-        ('Afternoon', 'French', 'Bonjour!', 'Casual'),
-        ('Evening', 'Spanish', 'Buenas Tardos', 'Formal')
-        `);
-})();
+            if(data.length === 0){
+
+                const { error: insertError} = await supabase.from('Greetings').insert([
+                    { timeOfDay: 'Morning', language: 'English', greetingMessage: 'Good morning', tone: 'Formal'},
+                    { timeOfDay: 'Afternoon', language: 'French', greetingMessage: 'Bonjour!', tone: 'Casual'},
+                    { timeOfDay: 'Evening', language: 'Spanish', greetingMessage: 'Buenas Tardes', tone: 'Formal'},
+                ]);
+
+                if(insertError){
+                    console.log("error in adding data")
+                }else{
+                    console.log("data added")
+                }
+
+            }else{
+                console.log("we already have data here");
+            }
+        }catch(error){
+            console.log(error.message);
+        }
+    }
+}
+
+seedData();
 
 // post api endpoints: /api/greet
 app.post('/api/greet', async (req,res) =>{
@@ -56,13 +66,16 @@ app.post('/api/greet', async (req,res) =>{
     try{
         const greetingReq = new GreetingRequest(req.body.timeOfDay, req.body.language, req.body.tone);
 
-        const greeting = await db.get(
-            ` select greetingMessage from greetings where timeOfDay = ? and language = ? and tone = ?`,
-            [greetingReq.timeOfDay, greetingReq.language, greetingReq.tone]
-        );
 
-        if(greeting){
-            const greetingRes = new GreetingResponse(greeting.greetingMessage);
+        const { data, error } = await supabase.from('Greetings').select('greetingMessage')
+                                    .eq('timeOfday', greetingReq.timeOfDay)
+                                    .eq('language', greetingReq.language)
+                                    .eq('tone', greetingReq.tone)
+
+        if(error) throw error;
+
+        if(data){
+            const greetingRes = new GreetingResponse(data.greetingMessage);
             return res.json(greetingRes);
         }
         else{
@@ -76,8 +89,9 @@ app.post('/api/greet', async (req,res) =>{
 // get all times of day endpoint: /api/timesOfDay
 app.get('/api/timesOfDay', async (req, res) =>{
     try{
-        const timeOfDay = await db.all(`select timeOfDay from greetings`);
-        res.json(timeOfDay.map(row => row.timeOfDay ));
+        const {data, error} = await supabase.from('Greetings').select('timeOfDay');
+        if(error) throw error;
+        res.json(data.map(row => row.timeOfDay ));
     }catch (error){
         res.status(500).json({error: error.message });
     }
@@ -86,8 +100,9 @@ app.get('/api/timesOfDay', async (req, res) =>{
 // get all languages endpoint: /api/languages
 app.get('/api/languages', async (req, res) =>{
     try{
-        const language = await db.all(`select language from greetings`);
-        res.json(language.map(row => row.language ));
+        const {data, error} = await supabase.from('Greetings').select('language');
+        if(error) throw error;
+        res.json(data.map(row => row.language ));
     }catch (error){
         res.status(500).json({error: error.message });
     }
