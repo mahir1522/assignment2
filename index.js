@@ -7,6 +7,8 @@ app.use(express.json());
 
 const PORT = 3000;
 
+module.exports = app;
+
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_KEY
@@ -68,7 +70,7 @@ app.post('/api/greet', async (req,res) =>{
 
 
         const { data, error } = await supabase.from('Greetings').select('greetingMessage')
-                                    .eq('timeOfday', greetingReq.timeOfDay)
+                                    .eq('timeOfDay', greetingReq.timeOfDay)
                                     .eq('language', greetingReq.language)
                                     .eq('tone', greetingReq.tone)
 
