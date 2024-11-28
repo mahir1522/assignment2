@@ -30,8 +30,7 @@ class GreetingResponse{
     }
 }
 
-function seedData(){
-    async() =>{
+const seedData = async() =>{
         try{
             const {data, error} = await supabase.from('Greetings').select('id');
 
@@ -58,7 +57,6 @@ function seedData(){
             console.log(error.message);
         }
     }
-}
 
 seedData();
 
@@ -76,15 +74,15 @@ app.post('/api/greet', async (req,res) =>{
 
         if(error) throw error;
 
-        if(data){
-            const greetingRes = new GreetingResponse(data.greetingMessage);
-            return res.json(greetingRes);
+        if(data.length > 0){
+            const greetingRes = new GreetingResponse(data[0].greetingMessage);
+            res.json(greetingRes);
         }
         else{
-            return res.status(404).json({error: 'No data avaible'});
+            res.status(404).json({error: 'No data avaible'});
         }
     }catch(error){
-        return res.status(400).json({error: error.message});
+        res.status(400).json({error: error.message});
     }
 });
 
