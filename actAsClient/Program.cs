@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 
 
 
-var url = "http://localhost:3000";
+var url = "https://assignment2-omega-nine.vercel.app";
 var endpoint_getLanguages = "/api/languages";
 var endpoint_getTimeOfDay = "/api/timesofday";
 var endpoint_getGreet = "/api/Greet";
